@@ -194,9 +194,10 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
         return b_features
 
     print(os.listdir(input_dir))
-    for input_direc in os.listdir(input_dir):
+    for input_direct in os.listdir(input_dir):
+        input_direc = os.path.join(input_dir, input_direct)
         print('Working on - ', str(os.path.join(input_dir, input_direc)))
-        video_names = [i for i in os.listdir(os.path.join(input_dir, input_direc)) if i[0] == 'v']
+        video_names = [i for i in os.listdir(input_direc) if i[0] == 'v']
         output_direc = os.path.join(output_dir, input_direc)
 
         for video_name in video_names:
