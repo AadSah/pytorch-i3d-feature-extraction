@@ -193,128 +193,129 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
         b_features = b_features.data.cpu().numpy()[:,:,0,0,0]
         return b_features
 
+    print(os.listdir(input_dir))
+    for input_direc in os.listdir(input_dir):
+        video_names = [i for i in os.listdir(input_direc) if i[0] == 'v']
 
-    video_names = [i for i in os.listdir(input_dir) if i[0] == 'v']
+        for video_name in video_names:
 
-    for video_name in video_names:
+            save_file = '{}-{}.npz'.format(video_name, mode)
+            if save_file in os.listdir(output_dir):
+                continue
 
-        save_file = '{}-{}.npz'.format(video_name, mode)
-        if save_file in os.listdir(output_dir):
-            continue
+            frames_dir = os.path.join(input_direc, video_name)
 
-        frames_dir = os.path.join(input_dir, video_name)
-
-
-        if mode == 'rgb':
-            if usezip:
-                rgb_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'img.zip'), 'r')
-                rgb_files = [i for i in rgb_zipdata.namelist() if i.startswith('img')]
-            else:
-                rgb_files = [i for i in os.listdir(frames_dir) if i.startswith('img')]
-
-            rgb_files.sort()
-            frame_cnt = len(rgb_files)
-
-        else:
-            if usezip:
-                flow_x_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'flow_x.zip'), 'r')
-                flow_x_files = [i for i in flow_x_zipdata.namelist() if i.startswith('x_')]
-
-                flow_y_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'flow_y.zip'), 'r')
-                flow_y_files = [i for i in flow_y_zipdata.namelist() if i.startswith('y_')]
-            else:
-                flow_x_files = [i for i in os.listdir(frames_dir) if i.startswith('flow_x')]
-                flow_y_files = [i for i in os.listdir(frames_dir) if i.startswith('flow_y')]
-
-            flow_x_files.sort()
-            flow_y_files.sort()
-            assert(len(flow_y_files) == len(flow_x_files))
-            frame_cnt = len(flow_y_files)
-
-
-
-        # clipped_length = (frame_cnt // chunk_size) * chunk_size   # Cut frames
-
-        # Cut frames
-        assert(frame_cnt > chunk_size)
-        clipped_length = frame_cnt - chunk_size
-        clipped_length = (clipped_length // frequency) * frequency  # The start of last chunk
-
-        frame_indices = [] # Frames to chunks
-        for i in range(clipped_length // frequency + 1):
-            frame_indices.append(
-                [j for j in range(i * frequency, i * frequency + chunk_size)])
-
-        frame_indices = np.array(frame_indices)
-
-        #frame_indices = np.reshape(frame_indices, (-1, 16)) # Frames to chunks
-        chunk_num = frame_indices.shape[0]
-
-        batch_num = int(np.ceil(chunk_num / batch_size))    # Chunks to batches
-        frame_indices = np.array_split(frame_indices, batch_num, axis=0)
-
-        if sample_mode == 'oversample':
-            full_features = [[] for i in range(10)]
-        else:
-            full_features = [[]]
-
-        for batch_id in range(batch_num):
-            
-            require_resize = sample_mode == 'resize'
-#            require_resize = True
 
             if mode == 'rgb':
                 if usezip:
-                    batch_data = load_ziprgb_batch(rgb_zipdata, rgb_files, 
-                        frame_indices[batch_id], require_resize)
-                else:                
-                    batch_data = load_rgb_batch(frames_dir, rgb_files, 
-                        frame_indices[batch_id], require_resize)
+                    rgb_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'img.zip'), 'r')
+                    rgb_files = [i for i in rgb_zipdata.namelist() if i.startswith('img')]
+                else:
+                    rgb_files = [i for i in os.listdir(frames_dir) if i.startswith('img')]
+
+                rgb_files.sort()
+                frame_cnt = len(rgb_files)
+
             else:
                 if usezip:
-                    batch_data = load_zipflow_batch(
-                        flow_x_zipdata, flow_y_zipdata,
-                        flow_x_files, flow_y_files, 
-                        frame_indices[batch_id], require_resize)
+                    flow_x_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'flow_x.zip'), 'r')
+                    flow_x_files = [i for i in flow_x_zipdata.namelist() if i.startswith('x_')]
+
+                    flow_y_zipdata = zipfile.ZipFile(os.path.join(frames_dir, 'flow_y.zip'), 'r')
+                    flow_y_files = [i for i in flow_y_zipdata.namelist() if i.startswith('y_')]
                 else:
-                    batch_data = load_flow_batch(frames_dir, 
-                        flow_x_files, flow_y_files, 
-                        frame_indices[batch_id], require_resize)
+                    flow_x_files = [i for i in os.listdir(frames_dir) if i.startswith('flow_x')]
+                    flow_y_files = [i for i in os.listdir(frames_dir) if i.startswith('flow_y')]
+
+                flow_x_files.sort()
+                flow_y_files.sort()
+                assert(len(flow_y_files) == len(flow_x_files))
+                frame_cnt = len(flow_y_files)
+
+
+
+            # clipped_length = (frame_cnt // chunk_size) * chunk_size   # Cut frames
+
+            # Cut frames
+            assert(frame_cnt > chunk_size)
+            clipped_length = frame_cnt - chunk_size
+            clipped_length = (clipped_length // frequency) * frequency  # The start of last chunk
+
+            frame_indices = [] # Frames to chunks
+            for i in range(clipped_length // frequency + 1):
+                frame_indices.append(
+                    [j for j in range(i * frequency, i * frequency + chunk_size)])
+
+            frame_indices = np.array(frame_indices)
+
+            #frame_indices = np.reshape(frame_indices, (-1, 16)) # Frames to chunks
+            chunk_num = frame_indices.shape[0]
+
+            batch_num = int(np.ceil(chunk_num / batch_size))    # Chunks to batches
+            frame_indices = np.array_split(frame_indices, batch_num, axis=0)
 
             if sample_mode == 'oversample':
-                batch_data_ten_crop = oversample_data(batch_data)
-
-                for i in range(10):
-#                    pdb.set_trace()
-                    #print(batch_data_ten_crop[i].shape)
-                    assert(batch_data_ten_crop[i].shape[-2]==224)
-                    assert(batch_data_ten_crop[i].shape[-3]==224)
-                    full_features[i].append(forward_batch(batch_data_ten_crop[i]))
-
+                full_features = [[] for i in range(10)]
             else:
-                if sample_mode == 'center_crop':
-                    batch_data = batch_data[:,:,16:240,58:282,:] # Centrer Crop  (39, 16, 224, 224, 2)
+                full_features = [[]]
 
-                #print(batch_data.shape)
+            for batch_id in range(batch_num):
                 
-                assert(batch_data.shape[-2]==224)
-                assert(batch_data.shape[-3]==224)
-                full_features[0].append(forward_batch(batch_data))
-            #print(batch_id,' / ', batch_num)
+                require_resize = sample_mode == 'resize'
+    #            require_resize = True
+
+                if mode == 'rgb':
+                    if usezip:
+                        batch_data = load_ziprgb_batch(rgb_zipdata, rgb_files, 
+                            frame_indices[batch_id], require_resize)
+                    else:                
+                        batch_data = load_rgb_batch(frames_dir, rgb_files, 
+                            frame_indices[batch_id], require_resize)
+                else:
+                    if usezip:
+                        batch_data = load_zipflow_batch(
+                            flow_x_zipdata, flow_y_zipdata,
+                            flow_x_files, flow_y_files, 
+                            frame_indices[batch_id], require_resize)
+                    else:
+                        batch_data = load_flow_batch(frames_dir, 
+                            flow_x_files, flow_y_files, 
+                            frame_indices[batch_id], require_resize)
+
+                if sample_mode == 'oversample':
+                    batch_data_ten_crop = oversample_data(batch_data)
+
+                    for i in range(10):
+    #                    pdb.set_trace()
+                        #print(batch_data_ten_crop[i].shape)
+                        assert(batch_data_ten_crop[i].shape[-2]==224)
+                        assert(batch_data_ten_crop[i].shape[-3]==224)
+                        full_features[i].append(forward_batch(batch_data_ten_crop[i]))
+
+                else:
+                    if sample_mode == 'center_crop':
+                        batch_data = batch_data[:,:,16:240,58:282,:] # Centrer Crop  (39, 16, 224, 224, 2)
+
+                    #print(batch_data.shape)
+                    
+                    assert(batch_data.shape[-2]==224)
+                    assert(batch_data.shape[-3]==224)
+                    full_features[0].append(forward_batch(batch_data))
+                #print(batch_id,' / ', batch_num)
 
 
 
-        full_features = [np.concatenate(i, axis=0) for i in full_features]
-        full_features = [np.expand_dims(i, axis=0) for i in full_features]
-        full_features = np.concatenate(full_features, axis=0)
+            full_features = [np.concatenate(i, axis=0) for i in full_features]
+            full_features = [np.expand_dims(i, axis=0) for i in full_features]
+            full_features = np.concatenate(full_features, axis=0)
 
-        np.savez(os.path.join(output_dir, save_file), 
-            feature=full_features,
-            frame_cnt=frame_cnt,
-            video_name=video_name)
+            np.savez(os.path.join(output_dir, save_file), 
+                feature=full_features,
+                frame_cnt=frame_cnt,
+                video_name=video_name)
 
-        print('{} done: {} / {}, {}'.format(
-            video_name, frame_cnt, clipped_length, full_features.shape))
+            print('{} done: {} / {}, {}'.format(
+                video_name, frame_cnt, clipped_length, full_features.shape))
 
 
 
