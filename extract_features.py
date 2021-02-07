@@ -166,7 +166,7 @@ def load_zipflow_batch(flow_x_zipdata, flow_y_zipdata,
 def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
     input_dir='', output_dir='', batch_size=40, usezip=False):
 
-    chunk_size = 16
+    chunk_size = 8
 
     assert(mode in ['rgb', 'flow'])
     assert(sample_mode in ['oversample', 'center_crop', 'resize'])
@@ -286,7 +286,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
 
                 for i in range(10):
 #                    pdb.set_trace()
-                    print(batch_data_ten_crop[i].shape)
+                    #print(batch_data_ten_crop[i].shape)
                     assert(batch_data_ten_crop[i].shape[-2]==224)
                     assert(batch_data_ten_crop[i].shape[-3]==224)
                     full_features[i].append(forward_batch(batch_data_ten_crop[i]))
@@ -295,12 +295,12 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
                 if sample_mode == 'center_crop':
                     batch_data = batch_data[:,:,16:240,58:282,:] # Centrer Crop  (39, 16, 224, 224, 2)
 
-                print(batch_data.shape)
+                #print(batch_data.shape)
                 
                 assert(batch_data.shape[-2]==224)
                 assert(batch_data.shape[-3]==224)
                 full_features[0].append(forward_batch(batch_data))
-            print(batch_id,' / ', batch_num)
+            #print(batch_id,' / ', batch_num)
 
 
 
