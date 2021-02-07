@@ -195,12 +195,14 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
 
     print(os.listdir(input_dir))
     for input_direc in os.listdir(input_dir):
-        video_names = [i for i in os.listdir(input_direc) if i[0] == 'v']
+        print('Working on - ', str(os.path.join(input_dir, input_direc)))
+        video_names = [i for i in os.listdir(os.path.join(input_dir, input_direc)) if i[0] == 'v']
+        output_direc = os.path.join(output_dir, input_direc)
 
         for video_name in video_names:
 
             save_file = '{}-{}.npz'.format(video_name, mode)
-            if save_file in os.listdir(output_dir):
+            if save_file in os.listdir(output_direc):
                 continue
 
             frames_dir = os.path.join(input_direc, video_name)
@@ -309,7 +311,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
             full_features = [np.expand_dims(i, axis=0) for i in full_features]
             full_features = np.concatenate(full_features, axis=0)
 
-            np.savez(os.path.join(output_dir, save_file), 
+            np.savez(os.path.join(output_direc, save_file), 
                 feature=full_features,
                 frame_cnt=frame_cnt,
                 video_name=video_name)
