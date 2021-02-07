@@ -24,8 +24,10 @@ def load_frame(frame_file, resize=False):
 
     data = Image.open(frame_file)
 
-    assert(data.size[1] == 256)
-    assert(data.size[0] == 340)
+#    print(data.size)
+
+#    assert(data.size[1] == 256)
+#    assert(data.size[0] == 340)
 
     if resize:
         data = data.resize((224, 224), Image.ANTIALIAS)
@@ -259,6 +261,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
         for batch_id in range(batch_num):
             
             require_resize = sample_mode == 'resize'
+#            require_resize = True
 
             if mode == 'rgb':
                 if usezip:
@@ -282,7 +285,8 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
                 batch_data_ten_crop = oversample_data(batch_data)
 
                 for i in range(10):
-                    pdb.set_trace()
+#                    pdb.set_trace()
+                    print(batch_data_ten_crop[i].shape)
                     assert(batch_data_ten_crop[i].shape[-2]==224)
                     assert(batch_data_ten_crop[i].shape[-3]==224)
                     full_features[i].append(forward_batch(batch_data_ten_crop[i]))
@@ -290,10 +294,13 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
             else:
                 if sample_mode == 'center_crop':
                     batch_data = batch_data[:,:,16:240,58:282,:] # Centrer Crop  (39, 16, 224, 224, 2)
+
+                print(batch_data.shape)
                 
                 assert(batch_data.shape[-2]==224)
                 assert(batch_data.shape[-3]==224)
                 full_features[0].append(forward_batch(batch_data))
+            print(batch_id,' / ', batch_num)
 
 
 
