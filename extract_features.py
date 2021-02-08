@@ -166,7 +166,7 @@ def load_zipflow_batch(flow_x_zipdata, flow_y_zipdata,
 def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
     input_dir='', output_dir='', batch_size=40, usezip=False):
 
-    chunk_size = 8
+    chunk_size = 16
 
     assert(mode in ['rgb', 'flow'])
     assert(sample_mode in ['oversample', 'center_crop', 'resize'])
@@ -194,11 +194,12 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
         return b_features
 
     print(os.listdir(input_dir))
+    i = True
     for input_direct in os.listdir(input_dir):
         input_direc = os.path.join(input_dir, input_direct)
         print('Working on - ', str(os.path.join(input_dir, input_direc)))
         video_names = [i for i in os.listdir(input_direc) if i[0] == 'v']
-        output_direc = os.path.join(output_dir, input_direc)
+        output_direc = os.path.join(output_dir, input_direct)
 
         for video_name in video_names:
 
@@ -207,6 +208,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
                 continue
 
             frames_dir = os.path.join(input_direc, video_name)
+            #print(frames_dir)
 
 
             if mode == 'rgb':
@@ -215,6 +217,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
                     rgb_files = [i for i in rgb_zipdata.namelist() if i.startswith('img')]
                 else:
                     rgb_files = [i for i in os.listdir(frames_dir) if i.startswith('img')]
+                    #print(rgb_files)
 
                 rgb_files.sort()
                 frame_cnt = len(rgb_files)
