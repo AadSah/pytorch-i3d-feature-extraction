@@ -200,6 +200,7 @@ def run(mode='rgb', load_model='', sample_mode='oversample', frequency=16,
         print('Working on - ', str(os.path.join(input_dir, input_direc)))
         video_names = [i for i in os.listdir(input_direc) if i[0] == 'v']
         output_direc = os.path.join(output_dir, input_direct)
+        os.mkdir(output_direc)
 
         for video_name in video_names:
 
